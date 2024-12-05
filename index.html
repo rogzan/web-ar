@@ -31,11 +31,13 @@
     // Funkcja dodająca punkty po kliknięciu
     window.addEventListener("click", function(event) {
       if (points.length < 2) {
-        let point = {
-          x: (event.clientX / window.innerWidth) * 2 - 1,
-          y: -(event.clientY / window.innerHeight) * 2 + 1
-        };
-        points.push(point);
+        // Obliczamy współrzędne w przestrzeni 3D na podstawie kliknięcia w oknie
+        let cursor = document.querySelector('a-cursor'); // Wskaźnik kursora
+        let position = cursor.getAttribute('position');  // Pobierz pozycję kursora w przestrzeni AR
+        
+        // Dodaj punkt na podstawie współrzędnych kursora
+        points.push(position);
+        
         if (points.length === 2) {
           ball.setAttribute("visible", "true");
           moveBall();
@@ -56,10 +58,11 @@
         if (progress < 1) {
           let x = start.x + (end.x - start.x) * progress;
           let y = start.y + (end.y - start.y) * progress;
-          ball.setAttribute("position", `${x} 0.5 ${y}`);
+          let z = start.z + (end.z - start.z) * progress;
+          ball.setAttribute("position", `${x} ${y} ${z}`);
           requestAnimationFrame(animate);
         } else {
-          ball.setAttribute("position", `${end.x} 0.5 ${end.y}`);
+          ball.setAttribute("position", `${end.x} ${end.y} ${end.z}`);
         }
       }
 
