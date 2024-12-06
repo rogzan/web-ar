@@ -3,50 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quick Look - Multiple Teapots</title>
+    <title>Babylon.js AR - Multiple Models</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://webar-sdk.blippar.com/releases/2.0.6/webar-sdk-v2.0.6.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            text-align: center;
+            margin: 0;
+            overflow: hidden;
         }
-        .model-container {
-            display: inline-block;
-            margin: 10px;
-        }
-        .model-container img {
-            width: 200px;
-            height: auto;
-            cursor: pointer;
+        canvas {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <h1>Quick Look AR - Multiple Teapots</h1>
-    <p>Tap on any teapot below to view it in AR.</p>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        // Podstawowe zmienne
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
-    <!-- Teapot 1 -->
-    <div class="model-container">
-        <a rel="ar" href="teapot.usdz">
-            <img src="teapot-thumbnail.jpg" alt="Teapot 1">
-        </a>
-        <p>Teapot 1</p>
-    </div>
+        let scene;
+        let webarStage;
 
-    <!-- Teapot 2 -->
-    <div class="model-container">
-        <a rel="ar" href="teapot.usdz">
-            <img src="teapot-thumbnail.jpg" alt="Teapot 2">
-        </a>
-        <p>Teapot 2</p>
-    </div>
+        // Funkcja tworząca scenę
+        const createScene = () => {
+            scene = new BABYLON.Scene(engine);
 
-    <!-- Teapot 3 -->
-    <div class="model-container">
-        <a rel="ar" href="teapot.usdz">
-            <img src="teapot-thumbnail.jpg" alt="Teapot 3">
-        </a>
-        <p>Teapot 3</p>
-    </div>
+            // Kamera
+            const camera = new BABYLON.UniversalCamera("Camera", new BABYLON.Vector3(0, 0, 0), scene);
+            camera.attachControl(canvas, true);
+
+            // Światło
+            const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+
+            // Podstawa AR (kontener modeli)
+            webarStage = new BABYLON.Mesh("webarStage", scene);
+
+            // Importowanie modelu czajnika
+            const importTeapot = (position) => {
+                BABYLON.SceneLoader.ImportMesh("", "./", "teapot.usdz", scene, (meshes) => {
+                    meshes.forEach((mesh) => {
+                        mesh.position = position.clone(); // Ustawienie pozycji
+                        mesh.scaling = new BABYLON.Vector3(0.1, 0.1, 0.1); // Skalowanie
+                        mesh.setParent(webarStage); // Dodanie do webarStage
+                    });
+                });
+            };
+
+            // Obsługa kliknięcia
+            scene.onPointerDown = (evt, pickResult) => {
+                if (pickResult.hit) {
+                    const position = pickResult.pickedPoint; // Pobranie punktu kliknięcia
+                    importTeapot(position); // Dodanie czajnika w miejscu kliknięcia
+                }
+            };
+
+            return scene;
+        };
+
+        // Inicjalizacja sceny
+        scene = createScene();
+
+        // Pętla renderowania
+        engine.runRenderLoop(() => {
+            if (scene) {
+                scene.render();
+            }
+        });
+
+        // Zmiana rozmiaru
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
 </body>
 </html>
