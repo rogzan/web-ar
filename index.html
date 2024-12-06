@@ -42,13 +42,14 @@
                     const pos2 = marker2.object3D.position;
 
                     progress += 0.01 * direction;
+
                     if (progress >= 1 || progress <= 0) {
                         direction *= -1;
-                        car.object3D.rotation.y += Math.PI;
+                        car.object3D.rotation.y += Math.PI; // Obrót o 180 stopni
                     }
 
                     const x = pos1.x + (pos2.x - pos1.x) * progress;
-                    const y = pos1.y; // Ustawienie na tej samej płaszczyźnie co markery
+                    const y = 0; // Stała płaszczyzna Y
                     const z = pos1.z + (pos2.z - pos1.z) * progress;
 
                     car.object3D.position.set(x, y, z);
@@ -56,7 +57,7 @@
                     const dx = pos2.x - pos1.x;
                     const dz = pos2.z - pos1.z;
                     const angle = Math.atan2(dz, dx);
-                    car.object3D.rotation.set(0, -angle, car.object3D.rotation.y);
+                    car.object3D.rotation.set(0, -angle, 0);
                 } else {
                     car.setAttribute('visible', 'false');
                 }
@@ -70,7 +71,3 @@
     </a-scene>
 </body>
 </html>
-
-
-
-
