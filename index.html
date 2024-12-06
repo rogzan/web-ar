@@ -19,7 +19,7 @@
             <a-cylinder height="2" radius="0.1" color="red" position="0 1 0"></a-cylinder>
         </a-marker>
         <a-entity camera></a-entity>
-        <a-entity id="movingCar" gltf-model="car2.glb" scale="0.2 0.2 0.2" visible="false"></a-entity>
+        <a-entity id="movingCar" gltf-model="car2.glb" scale="0.1 0.1 0.1" visible="false"></a-entity>
         <script>
             const marker1 = document.querySelector('#marker1');
             const marker2 = document.querySelector('#marker2');
@@ -44,18 +44,15 @@
                     progress += 0.01 * direction;
                     if (progress >= 1 || progress <= 0) {
                         direction *= -1;
-
-                        // Obrót o 180° przy zawracaniu
                         car.object3D.rotation.y += Math.PI;
                     }
 
                     const x = pos1.x + (pos2.x - pos1.x) * progress;
-                    const y = pos1.y + (pos2.y - pos1.y) * progress + 0.3;
+                    const y = pos1.y; // Ustawienie na tej samej płaszczyźnie co markery
                     const z = pos1.z + (pos2.z - pos1.z) * progress;
 
                     car.object3D.position.set(x, y, z);
 
-                    // Ustawienie orientacji samochodu wzdłuż linii markerów
                     const dx = pos2.x - pos1.x;
                     const dz = pos2.z - pos1.z;
                     const angle = Math.atan2(dz, dx);
@@ -73,6 +70,7 @@
     </a-scene>
 </body>
 </html>
+
 
 
 
