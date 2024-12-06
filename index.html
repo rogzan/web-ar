@@ -19,7 +19,7 @@
             <a-cylinder height="2" radius="0.1" color="red" position="0 1 0"></a-cylinder>
         </a-marker>
         <a-entity camera></a-entity>
-        <a-entity id="movingCar" gltf-model="car2.glb" scale="0.1 0.1 0.1" visible="false"></a-entity>
+        <a-entity id="movingCar" gltf-model="car2.glb" scale="0.2 0.2 0.2" visible="false"></a-entity>
         <script>
             const marker1 = document.querySelector('#marker1');
             const marker2 = document.querySelector('#marker2');
@@ -45,11 +45,11 @@
 
                     if (progress >= 1 || progress <= 0) {
                         direction *= -1;
-                        car.object3D.rotation.y += Math.PI; // Obrót o 180 stopni
+                        car.object3D.rotation.y += Math.PI; // Obrót o 180 stopni przy zawracaniu
                     }
 
                     const x = pos1.x + (pos2.x - pos1.x) * progress;
-                    const y = 0; // Stała płaszczyzna Y
+                    const y = pos1.y + (pos2.y - pos1.y) * progress;
                     const z = pos1.z + (pos2.z - pos1.z) * progress;
 
                     car.object3D.position.set(x, y, z);
