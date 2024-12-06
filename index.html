@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR.js - Car Moving Between Markers</title>
+    <title>AR.js - Aligned Car Between Markers</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
     <style>
@@ -19,7 +19,7 @@
             <a-cylinder height="2" radius="0.1" color="red" position="0 1 0"></a-cylinder>
         </a-marker>
         <a-entity camera></a-entity>
-        <a-entity id="movingCar" gltf-model="car2.glb" scale="0.3 0.3 0.3" visible="false"></a-entity>
+        <a-entity id="movingCar" gltf-model="car2.glb" scale="0.1 0.1 0.1" visible="false"></a-entity>
         <script>
             const marker1 = document.querySelector('#marker1');
             const marker2 = document.querySelector('#marker2');
@@ -43,12 +43,18 @@
                     progress += 0.01 * direction;
                     if (progress >= 1 || progress <= 0) {
                         direction *= -1;
-                        car.object3D.rotation.y -= Math.PI; // Obróć w przeciwnym kierunku
                     }
                     const x = pos1.x + (pos2.x - pos1.x) * progress;
                     const y = pos1.y + (pos2.y - pos1.y) * progress + 0.3;
                     const z = pos1.z + (pos2.z - pos1.z) * progress;
+
                     car.object3D.position.set(x, y, z);
+
+                    // Obliczenie kąta obrotu modelu
+                    const dx = pos2.x - pos1.x;
+                    const dz = pos2.z - pos1.z;
+                    const angle = Math.atan2(dz, dx);
+                    car.object3D.rotation.set(0, -angle, 0); // Ustawienie kąta na podstawie linii markerów
                 } else {
                     car.setAttribute('visible', 'false');
                 }
@@ -61,4 +67,5 @@
     </a-scene>
 </body>
 </html>
+
 
