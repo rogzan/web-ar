@@ -3,80 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babylon.js AR - Multiple Models</title>
-    <script src="https://cdn.babylonjs.com/babylon.js"></script>
-    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-    <script src="https://webar-sdk.blippar.com/releases/2.0.6/webar-sdk-v2.0.6.min.js?license-key==4d329690-b34d-4621-9090-e95fb061f978"></script>
+    <title>AR.js - Teapot Placement</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-        }
+        body { margin: 0; overflow: hidden; }
     </style>
 </head>
 <body>
-    <canvas id="renderCanvas"></canvas>
-    <script>
-        // Podstawowe zmienne
-        const canvas = document.getElementById("renderCanvas");
-        const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
+    <a-scene embedded arjs>
+        <a-entity camera></a-entity>
+        <script>
+            // Dodawanie modelu czajnika w miejscu kliknięcia
+            window.addEventListener('click', (event) => {
+                const scene = document.querySelector('a-scene');
 
-        let scene;
-        let webarStage;
+                // Obliczanie współrzędnych w przestrzeni AR
+                const x = (event.clientX / window.innerWidth) * 2 - 1;
+                const y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Funkcja tworząca scenę
-        const createScene = () => {
-            scene = new BABYLON.Scene(engine);
-
-            // Kamera
-            const camera = new BABYLON.UniversalCamera("Camera", new BABYLON.Vector3(0, 0, 0), scene);
-            camera.attachControl(canvas, true);
-
-            // Światło
-            const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
-
-            // Podstawa AR (kontener modeli)
-            webarStage = new BABYLON.Mesh("webarStage", scene);
-
-            // Importowanie modelu czajnika
-            const importTeapot = (position) => {
-                BABYLON.SceneLoader.ImportMesh("", "./", "teapot.usdz", scene, (meshes) => {
-                    meshes.forEach((mesh) => {
-                        mesh.position = position.clone(); // Ustawienie pozycji
-                        mesh.scaling = new BABYLON.Vector3(0.1, 0.1, 0.1); // Skalowanie
-                        mesh.setParent(webarStage); // Dodanie do webarStage
-                    });
-                });
-            };
-
-            // Obsługa kliknięcia
-            scene.onPointerDown = (evt, pickResult) => {
-                if (pickResult.hit) {
-                    const position = pickResult.pickedPoint; // Pobranie punktu kliknięcia
-                    importTeapot(position); // Dodanie czajnika w miejscu kliknięcia
-                }
-            };
-
-            return scene;
-        };
-
-        // Inicjalizacja sceny
-        scene = createScene();
-
-        // Pętla renderowania
-        engine.runRenderLoop(() => {
-            if (scene) {
-                scene.render();
-            }
-        });
-
-        // Zmiana rozmiaru
-        window.addEventListener("resize", () => {
-            engine.resize();
-        });
-    </script>
+                // Tworzenie modelu czajnika
+                const teapot = document.createElement('a-entity');
+                teapot.setAttribute('gltf-model', './teapot.usdz'); // Ścieżka do pliku USDZ
+                teapot.setAttribute('position', `${x} 0 ${y}`);
+                teapot.setAttribute('scale', '0.1 0.1 0.1');
+                scene.appendChild(teapot);
+            });
+        </script>
+    </a-scene>
 </body>
 </html>
