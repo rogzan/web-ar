@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR.js - Teapot Placement</title>
+    <title>AR.js - Train Moving Between Markers</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
     <style>
@@ -12,24 +12,74 @@
 </head>
 <body>
     <a-scene embedded arjs>
+        <!-- Marker 1 -->
+        <a-marker preset="hiro" id="marker1">
+            <!-- Rurka na markerze 1 -->
+            <a-cylinder height="2" radius="0.1" color="blue" position="0 1 0"></a-cylinder>
+        </a-marker>
+
+        <!-- Marker 2 -->
+        <a-marker preset="kanji" id="marker2">
+            <!-- Rurka na markerze 2 -->
+            <a-cylinder height="2" radius="0.1" color="red" position="0 1 0"></a-cylinder>
+        </a-marker>
+
+        <!-- Kamera -->
         <a-entity camera></a-entity>
+
+        <!-- Train Model -->
+        <a-entity id="rollingTrain" gltf-model="path/to/train.gltf" visible="false" scale="0.5 0.5 0.5"></a-entity>
+
         <script>
-            // Dodawanie modelu czajnika w miejscu kliknięcia
-            window.addEventListener('click', (event) => {
-                const scene = document.querySelector('a-scene');
+            const marker1 = document.querySelector('#marker1');
+            const marker2 = document.querySelector('#marker2');
+            const train = document.querySelector('#rollingTrain');
 
-                // Obliczanie współrzędnych w przestrzeni AR
-                const x = (event.clientX / window.innerWidth) * 2 - 1;
-                const y = -(event.clientY / window.innerHeight) * 2 + 1;
+            let isMarker1Visible = false;
+            let isMarker2Visible = false;
+            let animationFrame;
+            let progress = 0;
+            let direction = 1; // 1 oznacza od markera 1 do 2, -1 odwrotnie
 
-                // Tworzenie modelu czajnika
-                const teapot = document.createElement('a-entity');
-                teapot.setAttribute('gltf-model', './teapot.usdz'); // Ścieżka do pliku USDZ
-                teapot.setAttribute('position', `${x} 0 ${y}`);
-                teapot.setAttribute('scale', '0.1 0.1 0.1');
-                scene.appendChild(teapot);
-            });
+            marker1.addEventListener('markerFound', () => isMarker1Visible = true);
+            marker1.addEventListener('markerLost', () => isMarker1Visible = false);
+
+            marker2.addEventListener('markerFound', () => isMarker2Visible = true);
+            marker2.addEventListener('markerLost', () => isMarker2Visible = false);
+
+            const moveTrain = () => {
+                if (isMarker1Visible && isMarker2Visible) {
+                    train.setAttribute('visible', 'true');
+
+                    const pos1 = marker1.object3D.position;
+                    const pos2 = marker2.object3D.position;
+
+                    progress += 0.01 * direction; // Szybkość ruchu
+                    if (progress >= 1 || progress <= 0) {
+                        direction *= -1; // Zmień kierunek
+                    }
+
+                    const x = pos1.x + (pos2.x - pos1.x) * progress;
+                    const y = pos1.y + (pos2.y - pos1.y) * progress + 0.3; // +0.3 dla lewitacji nad markerem
+                    const z = pos1.z + (pos2.z - pos1.z) * progress;
+
+                    train.object3D.position.set(x, y, z);
+
+                    const angle = Math.atan2(pos2.z - pos1.z, pos2.x - pos1.x);
+                    train.object3D.rotation.y = angle;
+                } else {
+                    train.setAttribute('visible', 'false');
+                }
+
+                animationFrame = requestAnimationFrame(moveTrain);
+            };
+
+            moveTrain();
+
+            window.addEventListener('unload', () => cancelAnimationFrame(animationFrame));
         </script>
     </a-scene>
 </body>
 </html>
+
+
