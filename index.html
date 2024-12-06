@@ -24,6 +24,7 @@
             const marker1 = document.querySelector('#marker1');
             const marker2 = document.querySelector('#marker2');
             const car = document.querySelector('#movingCar');
+            
             let isMarker1Visible = false;
             let isMarker2Visible = false;
             let progress = 0;
@@ -41,27 +42,41 @@
                     const pos1 = marker1.object3D.position;
                     const pos2 = marker2.object3D.position;
 
-                    progress += 0.01 * direction;
+                    // W zależności od kierunku, ustalamy który punkt jest startem, a który celem
+                    let startPos, endPos;
+                    if (direction === 1) {
+                        startPos = pos1;
+                        endPos = pos2;
+                    } else {
+                        startPos = pos2;
+                        endPos = pos1;
+                    }
 
-                    if (progress >= 1 || progress <= 0) {
-                        // Obrót o 180° przy zmianie kierunku
-                        direction *= -1;
-                        car.object3D.rotation.y += Math.PI; 
-                        progress = Math.max(0, Math.min(1, progress)); // Zapewnia, że progress nie wyjdzie poza zakres
+                    // Aktualizacja postępu
+                    progress += 0.01 * direction;
+                    if (progress >= 1) {
+                        progress = 1;
+                        direction = -1; // Zmiana kierunku
+                    } else if (progress <= 0) {
+                        progress = 0;
+                        direction = 1; // Zmiana kierunku
                     }
 
                     // Obliczanie pozycji na trasie
-                    const x = pos1.x + (pos2.x - pos1.x) * progress;
-                    const y = pos1.y; // Na tej samej płaszczyźnie co markery
-                    const z = pos1.z + (pos2.z - pos1.z) * progress;
+                    const x = startPos.x + (endPos.x - startPos.x) * progress;
+                    const z = startPos.z + (endPos.z - startPos.z) * progress;
+                    const y = (pos1.y + pos2.y) / 2; // Średnia wysokości markerów
 
                     car.object3D.position.set(x, y, z);
 
-                    // Obrót samochodu wzdłuż trasy
-                    const dx = pos2.x - pos1.x;
-                    const dz = pos2.z - pos1.z;
+                    // Obliczanie kąta obrotu (wektor różnicy)
+                    const dx = endPos.x - startPos.x;
+                    const dz = endPos.z - startPos.z;
                     const angle = Math.atan2(dz, dx);
+
+                    // Ustawiamy rotację samochodu tak, aby był skierowany w stronę punktu końcowego
                     car.object3D.rotation.set(0, -angle, 0);
+
                 } else {
                     car.setAttribute('visible', 'false');
                 }
