@@ -45,7 +45,7 @@
                     if (progress >= 1 || progress <= 0) {
                         direction *= -1;
 
-                        // Obrót modelu przy zawracaniu
+                        // Obrót o 180° przy zawracaniu
                         car.object3D.rotation.y += Math.PI;
                     }
 
@@ -59,7 +59,7 @@
                     const dx = pos2.x - pos1.x;
                     const dz = pos2.z - pos1.z;
                     const angle = Math.atan2(dz, dx);
-                    car.object3D.rotation.set(0, -angle, 0);
+                    car.object3D.rotation.set(0, -angle, car.object3D.rotation.y);
                 } else {
                     car.setAttribute('visible', 'false');
                 }
