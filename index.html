@@ -28,6 +28,7 @@
             let isMarker2Visible = false;
             let progress = 0;
             let direction = 1;
+            let previousDirection = 1;
             let animationFrame;
 
             marker1.addEventListener('markerFound', () => isMarker1Visible = true);
@@ -43,17 +44,26 @@
 
                     progress += 0.01 * direction;
 
+                    // Sprawdzenie, czy model osiągnął jeden z końców
                     if (progress >= 1 || progress <= 0) {
+                        // Zmiana kierunku
+                        previousDirection = direction;
                         direction *= -1;
-                        car.object3D.rotation.y += Math.PI; // Obrót o 180 stopni przy zawracaniu
+
+                        // Obrót o 180 stopni przy zmianie kierunku
+                        if (direction !== previousDirection) {
+                            car.object3D.rotation.y += Math.PI;
+                        }
                     }
 
+                    // Obliczanie pozycji modelu
                     const x = pos1.x + (pos2.x - pos1.x) * progress;
                     const y = pos1.y + (pos2.y - pos1.y) * progress;
                     const z = pos1.z + (pos2.z - pos1.z) * progress;
 
                     car.object3D.position.set(x, y, z);
 
+                    // Ustawienie orientacji modelu wzdłuż linii między markerami
                     const dx = pos2.x - pos1.x;
                     const dz = pos2.z - pos1.z;
                     const angle = Math.atan2(dz, dx);
