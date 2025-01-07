@@ -84,90 +84,76 @@
     marker3.addEventListener('markerFound', () => { isMarker3Visible = true; });
     marker3.addEventListener('markerLost',  () => { isMarker3Visible = false; });
 
-    // progress: [0..3] (3 segmenty)
-    //  - [0..1) segment 0: jedziemy z (0,0,0) do localPos2
-    //  - [1..2) segment 1: jedziemy z localPos2 do localPos3
-    //  - [2..3] segment 2: jedziemy z localPos3 do (0,0,0)
+    // progress: [0..3) (3 segmenty w pętli)
+    //  - [0..1) segment 0: (0,0,0) -> localPos2
+    //  - [1..2) segment 1: localPos2 -> localPos3
+    //  - [2..3) segment 2: localPos3 -> (0,0,0), po czym reset do 0
     let progress = 0;
-
-    // direction: 1 (jazda "naprzód" po segmentach) lub -1 (jazda wstecz)
-    let direction = 1;
 
     let animationFrame;
 
     function moveCar() {
-    // Jeśli WSZYSTKIE 3 markery są widoczne
+      // Sprawdzamy widoczność wszystkich 3 markerów
       if (isMarker1Visible && isMarker2Visible && isMarker3Visible) {
         // Pokazujemy auto
         car.setAttribute('visible', 'true');
-  
-        // Obliczamy pozycje marker2 i marker3 w układzie ŚWIATOWYM
+
+        // Pobieramy pozycje marker2 i marker3 w układzie świata
         const worldPos2 = new THREE.Vector3();
-        const worldPos3 = new THREE.Vector3();
-  
         marker2.object3D.getWorldPosition(worldPos2);
+
+        const worldPos3 = new THREE.Vector3();
         marker3.object3D.getWorldPosition(worldPos3);
-  
-        // Przeliczamy na współrzędne LOKALNE w marker1
+
+        // Przeliczamy do lokalnych współrzędnych marker1
         const localPos2 = marker1.object3D.worldToLocal(worldPos2.clone());
         const localPos3 = marker1.object3D.worldToLocal(worldPos3.clone());
-  
-        // Który segment? (0: 1→2, 1: 2→3, 2: 3→1)
-        const seg = Math.floor(progress);       // 0,1,2
-        const segProgress = progress - seg;     // ułamek odcinka (0..1)
-  
+
+        // W którym segmencie jesteśmy? 0: 1→2, 1: 2→3, 2: 3→1
+        const seg = Math.floor(progress);        // 0,1,2
+        const segProgress = progress - seg;      // np. 0.25
+
         let startPos = new THREE.Vector3();
-        let endPos   = new THREE.Vector3();
-  
-        // Ustal start/end w zależności od segmentu
+        let endPos = new THREE.Vector3();
+
         if (seg === 0) {
-          // marker1 -> marker2
+          // segment: (0,0,0) -> localPos2
           startPos.set(0, 0, 0);
           endPos.copy(localPos2);
         } else if (seg === 1) {
-          // marker2 -> marker3
+          // segment: localPos2 -> localPos3
           startPos.copy(localPos2);
           endPos.copy(localPos3);
         } else {
-          // seg === 2 => marker3 -> marker1
+          // segment: localPos3 -> (0,0,0)
           startPos.copy(localPos3);
           endPos.set(0, 0, 0);
         }
-  
+
         // Interpolacja pozycji
         const x = THREE.MathUtils.lerp(startPos.x, endPos.x, segProgress);
         const y = THREE.MathUtils.lerp(startPos.y, endPos.y, segProgress);
         const z = THREE.MathUtils.lerp(startPos.z, endPos.z, segProgress);
-  
+
         car.object3D.position.set(x, y, z);
-  
-        // Wyznaczamy kąt obrotu w poziomie
+
+        // Kąt obrotu w płaszczyźnie XZ
         let angle = Math.atan2(endPos.z - startPos.z, endPos.x - startPos.x);
-  
-        // Jeśli cofamy, odwracamy kąt
-        if (direction === -1) {
-          angle += Math.PI;
-        }
-  
-        // W A-Frame musimy obrócić odwrotnie w osi Y
+
+        // Ponieważ nie zawracamy, NIE dodajemy tu Math.PI
+        // W A-Frame musimy obrócić odwrotnie w osi Y:
         car.object3D.rotation.set(0, -angle, 0);
-  
-        // Aktualizacja postępu
-        progress += 0.01 * direction;
-  
-        // Jeśli dojedziemy do końca (3), zawracamy (direction = -1)
-        if (progress > 3) {
-          progress = 3;
-          direction = -1;
-        }
-        // Jeśli cofniemy do 0, znowu jedziemy naprzód
-        else if (progress < 0) {
+
+        // Przesuwamy się dalej
+        progress += 0.01;
+
+        // Jeśli przekroczymy 3, wracamy do 0 (jedziemy "w kółko")
+        if (progress >= 3) {
           progress = 0;
-          direction = 1;
         }
-  
+
       } else {
-        // Jeśli nie widać któregoś z markerów, chowamy auto
+        // Jeśli nie widzimy któregoś markera, chowamy auto
         car.setAttribute('visible', 'false');
       }
   
