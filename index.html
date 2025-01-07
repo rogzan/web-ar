@@ -59,54 +59,53 @@
 
             function moveCar() {
                 if (isMarker1Visible && isMarker2Visible && isMarker3Visible) {
-                    // Ustawiamy auto jako widoczne
                     car.setAttribute('visible', 'true');
-
-                    // Pobieramy pozycje markerów w układzie 
+            
+                    // Pobieranie pozycji markerów
                     const worldPos1 = new THREE.Vector3();
                     const worldPos2 = new THREE.Vector3();
                     const worldPos3 = new THREE.Vector3();
-                    
+            
                     marker1.object3D.getWorldPosition(worldPos1);
                     marker2.object3D.getWorldPosition(worldPos2);
                     marker3.object3D.getWorldPosition(worldPos3);
-
-                    // Obliczamy lokalną pozycję docelowego markera względem obecnego
-                    const currentMarkerIndex = progress % 3;
-                    const nextMarkerIndex = (progress + direction + 3) % 3;
-
-                    const currentMarker = marker1.object3D.worldToLocal(positions[nextMarkerIndex].clone());
-
-                    // Aktualizujemy postęp ruchu
+            
+                    // Tablica pozycji markerów w kolejności
+                    const positions = [worldPos1, worldPos2, worldPos3];
+            
+                    // Aktualny i następny marker
+                    const currentMarkerIndex = Math.floor(progress) % 3;
+                    const nextMarkerIndex = (currentMarkerIndex + direction + 3) % 3;
+            
+                    const currentPos = positions[currentMarkerIndex];
+                    const nextPos = positions[nextMarkerIndex];
+            
+                    // Obliczanie interpolacji pozycji
+                    const interpolationFactor = progress % 1; // Ułamek wskazujący postęp między markerami
+                    const interpolatedX = THREE.MathUtils.lerp(currentPos.x, nextPos.x, interpolationFactor);
+                    const interpolatedY = THREE.MathUtils.lerp(currentPos.y, nextPos.y, interpolationFactor);
+                    const interpolatedZ = THREE.MathUtils.lerp(currentPos.z, nextPos.z, interpolationFactor);
+            
+                    car.object3D.position.set(interpolatedX, interpolatedY, interpolatedZ);
+            
+                    // Obliczanie kąta rotacji
+                    const angle = Math.atan2(nextPos.z - currentPos.z, nextPos.x - currentPos.x);
+                    car.object3D.rotation.set(0, -angle, 0);
+            
+                    // Aktualizacja progresji ruchu
                     progress += 0.01 * direction;
                     if (progress >= 3) {
                         progress = 2;
-                        direction = -1;
+                        direction = -1; // Zawracanie wstecz
                     } else if (progress < 0) {
                         progress = 0;
-                        direction = 1;
+                        direction = 1; // Powrót do przodu
                     }
-
-                    // Obliczamy aktualną pozycję samochodu na linii od (0,0,0) w marker1 do localPos2
-                    const x = 0 + (currentMarker.x - 0) * (progress % 1);
-                    const y = 0 + (currentMarker.y - 0) * (progress % 1);
-                    const z = 0 + (currentMarker.z - 0) * (progress % 1);
-
-                    car.object3D.position.set(x, y, z);
-
-                    // Obliczamy kąt
-                    let angle = Math.atan2(currentMarker.z, currentMarker.x);
-                    if (direction === -1) {
-                        angle += Math.PI;
-                    }
-
-                    car.object3D.rotation.set(0, -angle, 0);
-
+            
                 } else {
-                    // Jeśli oba markery nie są widoczne, ukrywamy samochód.
-                    car.setAttribute('visible', 'false');
+                    car.setAttribute('visible', 'false'); // Ukrywanie samochodu, jeśli któryś marker nie jest widoczny
                 }
-
+            
                 animationFrame = requestAnimationFrame(moveCar);
             }
 
