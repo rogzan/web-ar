@@ -70,7 +70,7 @@
                     marker2.object3D.getWorldPosition(worldPos2);
                     marker3.object3D.getWorldPosition(worldPos3);
             
-                    // Tablica pozycji markerów w kolejności
+                    // Lista pozycji markerów w kolejności
                     const positions = [worldPos1, worldPos2, worldPos3];
             
                     // Aktualny i następny marker
@@ -80,15 +80,16 @@
                     const currentPos = positions[currentMarkerIndex];
                     const nextPos = positions[nextMarkerIndex];
             
-                    // Obliczanie interpolacji pozycji
-                    const interpolationFactor = progress % 1; // Ułamek wskazujący postęp między markerami
+                    // Obliczanie pozycji samochodu (interpolacja między aktualnym a następnym markerem)
+                    const interpolationFactor = progress % 1;
                     const interpolatedX = THREE.MathUtils.lerp(currentPos.x, nextPos.x, interpolationFactor);
                     const interpolatedY = THREE.MathUtils.lerp(currentPos.y, nextPos.y, interpolationFactor);
                     const interpolatedZ = THREE.MathUtils.lerp(currentPos.z, nextPos.z, interpolationFactor);
             
+                    // Ustawianie pozycji samochodu
                     car.object3D.position.set(interpolatedX, interpolatedY, interpolatedZ);
             
-                    // Obliczanie kąta rotacji
+                    // Obliczanie rotacji samochodu (w kierunku następnego markera)
                     const angle = Math.atan2(nextPos.z - currentPos.z, nextPos.x - currentPos.x);
                     car.object3D.rotation.set(0, -angle, 0);
             
@@ -96,12 +97,11 @@
                     progress += 0.01 * direction;
                     if (progress >= 3) {
                         progress = 2;
-                        direction = -1; // Zawracanie wstecz
+                        direction = -1; // Zmiana kierunku na wstecz
                     } else if (progress < 0) {
                         progress = 0;
-                        direction = 1; // Powrót do przodu
+                        direction = 1; // Zmiana kierunku na przód
                     }
-            
                 } else {
                     car.setAttribute('visible', 'false'); // Ukrywanie samochodu, jeśli któryś marker nie jest widoczny
                 }
