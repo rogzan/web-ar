@@ -71,12 +71,10 @@
     const car   = document.querySelector('#movingCar');
     const carContainer = document.querySelector('#car-container');
 
-    // Flagi widoczności
     let isMarker1Visible = false;
     let isMarker2Visible = false;
     let isMarker3Visible = false;
 
-    // Nasłuchiwanie zdarzeń
     marker1.addEventListener('markerFound', () => { isMarker1Visible = true; });
     marker1.addEventListener('markerLost',  () => { isMarker1Visible = false; });
     marker2.addEventListener('markerFound', () => { isMarker2Visible = true; });
@@ -93,25 +91,20 @@
     let animationFrame;
 
     function moveCar() {
-      // Sprawdzamy widoczność wszystkich 3 markerów
       if (isMarker1Visible && isMarker2Visible && isMarker3Visible) {
-        // Pokazujemy auto
         car.setAttribute('visible', 'true');
 
-        // Pobieramy pozycje marker2 i marker3 w układzie świata
         const worldPos2 = new THREE.Vector3();
         marker2.object3D.getWorldPosition(worldPos2);
 
         const worldPos3 = new THREE.Vector3();
         marker3.object3D.getWorldPosition(worldPos3);
 
-        // Przeliczamy do lokalnych współrzędnych marker1
         const localPos2 = marker1.object3D.worldToLocal(worldPos2.clone());
         const localPos3 = marker1.object3D.worldToLocal(worldPos3.clone());
 
-        // W którym segmencie jesteśmy? 0: 1→2, 1: 2→3, 2: 3→1
         const seg = Math.floor(progress);        // 0,1,2
-        const segProgress = progress - seg;      // np. 0.25
+        const segProgress = progress - seg;      
 
         let startPos = new THREE.Vector3();
         let endPos = new THREE.Vector3();
@@ -140,20 +133,15 @@
         // Kąt obrotu w płaszczyźnie XZ
         let angle = Math.atan2(endPos.z - startPos.z, endPos.x - startPos.x);
 
-        // Ponieważ nie zawracamy, NIE dodajemy tu Math.PI
-        // W A-Frame musimy obrócić odwrotnie w osi Y:
         car.object3D.rotation.set(0, -angle, 0);
 
-        // Przesuwamy się dalej
         progress += 0.01;
 
-        // Jeśli przekroczymy 3, wracamy do 0 (jedziemy "w kółko")
         if (progress >= 3) {
           progress = 0;
         }
 
       } else {
-        // Jeśli nie widzimy któregoś markera, chowamy auto
         car.setAttribute('visible', 'false');
       }
   
