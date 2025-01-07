@@ -1,161 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AR.js - Car Moving Between 3 Markers (Local)</title>
-
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
-  <style>
-    body { margin:0; overflow:hidden; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR.js - Car Moving Between Markers</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/ar.js/aframe/build/aframe-ar.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+    </style>
 </head>
 <body>
+    <a-scene embedded arjs>
+        <!-- Marker 1 (start) -->
+        <a-marker preset="hiro" id="marker1">
+            <a-entity id="car-container">
+                <!-- Niebieska rurka w marker1 -->
+                <a-cylinder height="2" radius="0.1" color="blue" position="0 1 0"></a-cylinder>
+                <!-- Samochód w marker1 -->
+                <a-entity id="movingCar" gltf-model="car2.glb" scale="0.2 0.2 0.2"></a-entity>
+            </a-entity>
+        </a-marker>
 
-<a-scene embedded arjs>
-  <!-- Marker 1 (start) -->
-  <a-marker preset="hiro" id="marker1">
-    <a-entity id="car-container">
-      <!-- Niebieska rurka dla testów -->
-      <a-cylinder height="2" radius="0.1" color="blue" position="0 1 0"></a-cylinder>
-      <!-- Samochód (dziecko marker1) -->
-      <a-entity
-        id="movingCar"
-        gltf-model="car2.glb"
-        scale="0.2 0.2 0.2"
-        visible="false">
-      </a-entity>
-    </a-entity>
-  </a-marker>
+        <!-- Marker 2 (cel) -->
+        <a-marker preset="kanji" id="marker2">
+            <a-cylinder height="2" radius="0.1" color="red" position="0 1 0"></a-cylinder>
+        </a-marker>
 
-  <!-- Marker 2 -->
-  <a-marker preset="kanji" id="marker2">
-    <a-cylinder height="2" radius="0.1" color="red" position="0 1 0"></a-cylinder>
-  </a-marker>
+        <a-entity camera></a-entity>
 
-  <!-- Marker 3 (custom) -->
-  <a-marker
-    preset="custom"
-    type="pattern"
-    url="custom-marker.patt"
-    id="marker3">
-    <a-cylinder height="2" radius="0.1" color="green" position="0 1 0"></a-cylinder>
-  </a-marker>
+        <script>
+            const marker1 = document.querySelector('#marker1');
+            const marker2 = document.querySelector('#marker2');
+            const car = document.querySelector('#movingCar');
+            const carContainer = document.querySelector('#car-container');
 
-  <!-- Kamera -->
-  <a-entity camera></a-entity>
+            let isMarker1Visible = false;
+            let isMarker2Visible = false;
 
-  <script>
-  const marker1 = document.getElementById('marker1');
-  const marker2 = document.getElementById('marker2');
-  const marker3 = document.getElementById('marker3');
+            let progress = 0;   // 0 - przy marker1, 1 - przy marker2
+            let direction = 1;  // 1 - w stronę marker2, -1 - w stronę marker1
 
-  const car = document.getElementById('movingCar');
-  const carContainer = document.getElementById('car-container');
+            let animationFrame;
 
-  // Flagi widoczności
-  let isMarker1Visible = false;
-  let isMarker2Visible = false;
-  let isMarker3Visible = false;
+            marker1.addEventListener('markerFound', () => isMarker1Visible = true);
+            marker1.addEventListener('markerLost', () => isMarker1Visible = false);
+            marker2.addEventListener('markerFound', () => isMarker2Visible = true);
+            marker2.addEventListener('markerLost', () => isMarker2Visible = false);
 
-  // Obsługa zdarzeń "found"/"lost"
-  marker1.addEventListener('markerFound', () => isMarker1Visible = true);
-  marker1.addEventListener('markerLost',  () => isMarker1Visible = false);
-  marker2.addEventListener('markerFound', () => isMarker2Visible = true);
-  marker2.addEventListener('markerLost',  () => isMarker2Visible = false);
-  marker3.addEventListener('markerFound', () => isMarker3Visible = true);
-  marker3.addEventListener('markerLost',  () => isMarker3Visible = false);
+            function moveCar() {
+                if (isMarker1Visible && isMarker2Visible) {
+                    // Ustawiamy auto jako widoczne
+                    car.setAttribute('visible', 'true');
 
-  // progress: 0..3, opisuje 3 odcinki
-  // direction: 1 (przód) lub -1 (wstecz)
-  let progress  = 0;
-  let direction = 1;
+                    // Pobieramy pozycje markerów w układzie świata
+                    const worldPos1 = new THREE.Vector3();
+                    const worldPos2 = new THREE.Vector3();
+                    marker1.object3D.getWorldPosition(worldPos1);
+                    marker2.object3D.getWorldPosition(worldPos2);
 
-  let animationFrame;
+                    // Przeliczamy pozycję marker2 do lokalnego układu marker1
+                    const localPos2 = marker1.object3D.worldToLocal(worldPos2.clone());
 
-  function moveCar() {
-    // Jeśli WSZYSTKIE 3 markery są widoczne
-    if (isMarker1Visible && isMarker2Visible && isMarker3Visible) {
-      // Pokazujemy auto
-      car.setAttribute('visible', 'true');
+                    // Aktualizujemy postęp ruchu
+                    progress += 0.01 * direction;
+                    if (progress > 1) {
+                        progress = 1;
+                        direction = -1; // Zawróć
+                    } else if (progress < 0) {
+                        progress = 0;
+                        direction = 1; // Zawróć
+                    }
 
-      // Obliczamy pozycje marker2 i marker3 w układzie ŚWIATOWYM
-      const worldPos2 = new THREE.Vector3();
-      const worldPos3 = new THREE.Vector3();
+                    // Obliczamy aktualną pozycję samochodu na linii od (0,0,0) w marker1 do localPos2
+                    const x = 0 + (localPos2.x - 0) * progress;
+                    const y = 0 + (localPos2.y - 0) * progress; // W razie potrzeby można ustawić stałą wysokość np. y = 0
+                    const z = 0 + (localPos2.z - 0) * progress;
 
-      marker2.object3D.getWorldPosition(worldPos2);
-      marker3.object3D.getWorldPosition(worldPos3);
+                    car.object3D.position.set(x, y, z);
 
-      // Przeliczamy na współrzędne LOKALNE w marker1
-      const localPos2 = marker1.object3D.worldToLocal(worldPos2.clone());
-      const localPos3 = marker1.object3D.worldToLocal(worldPos3.clone());
+                    // Obliczamy kąt. Zawsze w kierunku marker2 (localPos2), gdy direction = 1.
+                    let angle = Math.atan2(localPos2.z, localPos2.x);
 
-      // Który segment? (0: 1→2, 1: 2→3, 2: 3→1)
-      const seg = Math.floor(progress);       // 0,1,2
-      const segProgress = progress - seg;     // ułamek odcinka (0..1)
+                    // Jeśli jedziemy wstecz, odwracamy kąt o 180°
+                    if (direction === -1) {
+                        angle += Math.PI;
+                    }
 
-      let startPos = new THREE.Vector3();
-      let endPos   = new THREE.Vector3();
+                    car.object3D.rotation.set(0, -angle, 0);
 
-      // Ustal start/end w zależności od segmentu
-      if (seg === 0) {
-        // marker1 -> marker2
-        startPos.set(0, 0, 0);
-        endPos.copy(localPos2);
-      } else if (seg === 1) {
-        // marker2 -> marker3
-        startPos.copy(localPos2);
-        endPos.copy(localPos3);
-      } else {
-        // seg === 2 => marker3 -> marker1
-        startPos.copy(localPos3);
-        endPos.set(0, 0, 0);
-      }
+                } else {
+                    // Jeśli oba markery nie są widoczne, ukrywamy samochód.
+                    car.setAttribute('visible', 'false');
+                }
 
-      // Interpolacja pozycji
-      const x = THREE.MathUtils.lerp(startPos.x, endPos.x, segProgress);
-      const y = THREE.MathUtils.lerp(startPos.y, endPos.y, segProgress);
-      const z = THREE.MathUtils.lerp(startPos.z, endPos.z, segProgress);
+                animationFrame = requestAnimationFrame(moveCar);
+            }
 
-      car.object3D.position.set(x, y, z);
-
-      // Wyznaczamy kąt obrotu w poziomie
-      let angle = Math.atan2(endPos.z - startPos.z, endPos.x - startPos.x);
-
-      // Jeśli cofamy, odwracamy kąt
-      if (direction === -1) {
-        angle += Math.PI;
-      }
-
-      // W A-Frame musimy obrócić odwrotnie w osi Y
-      car.object3D.rotation.set(0, -angle, 0);
-
-      // Aktualizacja postępu
-      progress += 0.01 * direction;
-
-      // Jeśli dojedziemy do końca (3), zawracamy (direction = -1)
-      if (progress > 3) {
-        progress = 3;
-        direction = -1;
-      }
-      // Jeśli cofniemy do 0, znowu jedziemy naprzód
-      else if (progress < 0) {
-        progress = 0;
-        direction = 1;
-      }
-
-    } else {
-      // Jeśli nie widać któregoś z markerów, chowamy auto
-      car.setAttribute('visible', 'false');
-    }
-
-    animationFrame = requestAnimationFrame(moveCar);
-  }
-
-  moveCar();
-  window.addEventListener('unload', () => cancelAnimationFrame(animationFrame));
-  </script>
-</a-scene>
+            moveCar();
+            window.addEventListener('unload', () => cancelAnimationFrame(animationFrame));
+        </script>
+    </a-scene>
 </body>
-</html>
+</html> 
